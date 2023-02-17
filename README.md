@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Open science involves sharing of code, and Python is a popular language for that code.  However, scientists may be reluctant to try shared Python code when doing so involves many installation steps, like installing [Conda](https://docs.conda.io/en/latest/), installing packages, installing other packages with [Pip](https://pypi.org/project/pip/), possibly resolving package conflicts, etc.
+Open science involves sharing of code, and Python is a popular language for that code.  Scientists may be reluctant, though, to try shared Python code when doing so involves many installation steps, like installing [Conda](https://docs.conda.io/en/latest/), installing packages, installing other packages with [Pip](https://pypi.org/project/pip/), possibly resolving package conflicts, etc.
 
 An appealing alternative is to "bundle" the Python code and its dependencies into a single executable that can be downloaded from the "Releases" section of a GitHub site.  This project is a test bed for working out the detals of such an approach.  This project is called a "demo" rather than a "test" just in case any of the tools involved implicitly assume that items with names including "test" are parts of an internal test suite.
 
@@ -14,6 +14,56 @@ An appealing alternative is to "bundle" the Python code and its dependencies int
 Nuitka is the more ambitious system, converting the Python code into C code that is compiled with optimization.  As such, it has a higher risk of producing an output executable that does not behavior exactly the same as the input Python code.
 
 Note that these systems do not create a single executable that can run on any platform.  It is necessary to perform the executable creation separately on macOS, Windows and Linux.
+
+## Distributing Executables
+
+To distribute executables, include them in the ["Releases" section of the GitHub site](https://github.com/JaneliaSciComp/python-dist-demo/releases) for the source code.  Releases cannot include directories (folders), which is the real format of a macOS app bundle.  So a macOS app must be compressed into a single "zipped" file by right-clicking on it and choosing the "Compress" item from the pop-up menu.
+
+A Windows executable is a single file, so it can be added to a GitHub release directly, but it will be smaller (and thus faster to download) if it is compressed to a zipped file, too.  Right-click on the Windows executable, choose "Send to" and then "Compressed (zipped) folder".
+
+There seems to be no way to _add_ executables (binaries) to a release that has been published, so be careful to assemble all the pieces of the release before publishing it.  Releasing executables for multiple platforms at once usually requires using multiple computers, so use the followwing approach:
+1. On one computer&mdash;say, a macOS system&mdash;start creating the release.  Follow the directions in the [GitHub documetation on releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository), which involves defining a new tag to be applied to the repository.
+2. Add the zipped macOS executable by dragging it to the draft release's input area labeled, "Attach binaries by dropping them here or selecting them."
+3. Instead of pressing "Publish release", press "Save draft" so it will be available for further editing.
+4. On the other computer&mdash;say, a Windows system&mdash;visit the GitHub site's "Releases" section and find the draft release.
+5. Resume editing the draft release by pressing the pencil icon.
+6. Add the zipped Windows executable to the "Binaries" section of the draft release by dragging it to the "Attach binaries..." area.
+7. Finally, press the "Publish release" button to make the release public now that it is fully assembled.
+
+A user then downloads an executable from the release and uncompresses it.  On Windows, uncompressing simply involves right-clicking on the zipped file and choosing "Extract" from the pop-up menu (that option may be in a submenu, "7-Zip" for example).
+
+On macOS, downloading and using the executable requires extra steps due to Apple's security measures.
+1. When downloading, the web browser may display a message saying the zip file "is not commonly downloaded and may be dangerous."  Press the  `⌃` (up chevron) symbol and choose "Keep".
+2. The zip file now appears in the `Downloads` folder.  Double click on the zip file to decompress it.
+3. _Control_-click on the decompressed executable (.app file) and choose "Open" from the pop-up menu.
+4. A dialog will appear, saying the app "can't be opened because Apple cannot check it for malicious software."
+5. Choose the "Open" option from this dialog.
+6. The executable should now be ready for use.
+
+## Running Executables
+
+For systems without a user interface, a user will run the executable from a command-line shell.  On macOS, doing so involves reaching down into the app bundle as follows:
+
+```
+$ example.app/Contents/MacOS/example -arg1 -arg2
+```
+If the user moves the app to the standard location, the command would be the following:
+```
+$ /Applications/example.app/Contents/MacOS/example -arg1 -arg2
+```
+
+On Windows, running the executable is simpler:
+```
+$ example.exe -arg1 -arg2
+```
+It becomes somewhat more complicated if the user moves the executable to the standard location, `C:\Program Files`, because the path then involves spaces.  When using the basic Command Prompt application as the shell, spaces are handled by simply adding quotes:
+```
+$ "C:\Program Files\Example\example.exe" -arg1 -arg2
+```
+In PowerShell, a `.` (dot) must precede the executable path to run it:
+```
+$ . "C:\Program Files\Example\example.exe" -arg1 -arg2
+```
 
 ## Demo 1
 
@@ -95,3 +145,9 @@ On Windows, run this demo as follows:
 Performance on Windows does not seem quite as good as on macOS, but still, it is better than PyInstaller.
 
 On both macOS and Windows, the executables are rather large.
+
+## Demo 2
+
+_What to try next_?
+* _Some actualy NumPy functionality on the data in a H5J file_?
+* [_Blender as a Python module_](https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html)?
