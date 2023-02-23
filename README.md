@@ -50,10 +50,13 @@ This certificate is used to code sign your app for distribution outside of the M
 5. Follow the steps, noting that the `Certificate Assistant` that is mentioned is accessible through the `Keychain Access` application, in its menu also called "Keychain Access", right next to the Apple menu in the main menu bar.
 6. Two files will be created: `CertificateSigningRequest.certSigningRequest` and `developerID_application.cer`.  Double-click the _second_, the `.cer` file.
 7. Add `developerID_application.cer` to the `Login` keychain (adding it to `Local items` may cause an `Error: -25294`)
-8. Back in the main `Keychain Access` application window, a new item should appear in the `Certificates` tab.  If it is red, with an error message, try [downloading the "Organizational unit: G2" certificate](https://www.apple.com/certificateauthority) and double-clicking to install _it_ in the keychain.
+8. Back in the main `Keychain Access` application window, a new item should appear in the `Certificates` tab.  If it is red, with an error message, try [downloading the "Developer ID - G2 (Expiring 09/17/2031 00:00:00 UTC)" certificate](https://www.apple.com/certificateauthority) and double-clicking to install _it_ in the keychain.
 9. In a shell, execute:
 
         $ security find-identity -v -p codesigning
+
+    The result will be something like:
+    
           1) C83C...5335 "Developer ID Application: ... (...)"
             1 valid identities found
 
