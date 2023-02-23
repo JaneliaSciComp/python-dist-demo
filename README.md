@@ -40,6 +40,25 @@ On macOS, downloading and using the executable requires extra steps due to Apple
 5. Choose the "Open" option from this dialog.
 6. The executable should now be ready for use.
 
+The macOS user can avoid these extra steps if the developer is willing to pay (roughly $100 per year) to join the [Apple Developer Program](https://developer.apple.com/programs).  Members of this program can apply _code signing_ to an executable so it will pass Apple's security measures automatically.  Apple expects that the typical way to apply code signing is through the [Xcode](https://developer.apple.com/xcode) development environment, but developers bundling Python scripts may well not work that way, and can use the following alternative approach:
+1. [Log in](https://developer.apple.com/account) to an Apple Developer Program account.
+2. Go to the page for [creating a new certification](https://developer.apple.com/account/resources/certificates/add).
+3. Under "Software", choose "Developer ID Application:
+This certificate is used to code sign your app for distribution outside of the Mac App Store," and press "Continue".
+4. Under "Select a Developer ID Certificate Intermediary", choose a "Profile Type" of "G2 Sub-CA (Xcode 11.4.1 or later)".
+5. Click "Learn more" to [create a certificate signing request](https://developer.apple.com/help/account/create-certificates/create-a-certificate-signing-request).
+5. Follow the steps, noting that the `Certificate Assistant` that is mentioned is accessible through the `Keychain Access` application, in its menu also called "Keychain Access", right next to the Apple menu in the main menu bar.
+6. Two files will be created: `CertificateSigningRequest.certSigningRequest` and `developerID_application.cer`.  Double-click the _second_, the `.cer` file.
+7. Add `developerID_application.cer` to the `Login` keychain (adding it to `Local items` may cause an `Error: -25294`)
+8. Back in the main `Keychain Access` application window, a new item should appear in the `Certificates` tab.  If it is red, with an error message, try [downloading the "Organizational unit: G2" certificate](https://www.apple.com/certificateauthority) and double-clicking to install _it_ in the keychain.
+9. In a shell, execute:
+
+        $ security find-identity -v -p codesigning
+          1) C83C...5335 "Developer ID Application: ... (...)"
+            1 valid identities found
+
+    The long hexidecimal identifier (e.g., `C83C...5335`) is the _code signing identity_, which can be used with Nuitka's `--macos-sign-identity` option, as [described below](#nuitka).
+
 ## Running Executables
 
 For systems without a user interface, a user will run the executable from a command-line shell.  On macOS, doing so involves reaching down into the app bundle as follows:
@@ -116,6 +135,10 @@ Nuitka then needs special arguments to create a standard macOS "application", wh
     $ python -m nuitka --standalone --macos-create-app-bundle --include-data-files=../VERSION=VERSION demo1.py
 
 The `--include-data-files` argument is necessary for Nuitka to copy the `VERSION` file into the final bundle.  Note from the output of the demo, below, that where the `VERSION` file is different when running in a bundled executable and when running as a standard Python script; see the code for details.
+
+When using macOS code signing, as [described above](#distributing-executables), add the `--macos-sign-identity=C83C...5335` argument, where `C83C...5335` is the code signing identity found with the `security find-identity` command:
+
+    $ python -m nuitka --standalone --macos-create-app-bundle --include-data-files=../VERSION=VERSION --macos-sign-identity=C83C...5335 demo1.py
 
 On macOS, run this demo as follows:
 
