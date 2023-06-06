@@ -192,11 +192,11 @@ On Linux (Ubuntu 20.04, at least) two additional packages are needed: libpython-
 
 Run this demo on Linux as follows:
 
-    $ ./demo1.bin -i path\to\example.h5j
+    $ ./demo1.bin -i path/to/example.h5j
     Checking for '/tmp/VERSION'
     Checking for '/tmp/onefile_2083980_1686061142_611326/VERSION'
     Version 1.0.0
-    Using input file: path\to\example.h5j
+    Using input file: path/to/example.h5j
     H5J dimensions: 1210, 566, 174
 
 On Windows and Linux, the `--onefile` option makes compilation take a long time.  On all platforms, the executables are rather large.
