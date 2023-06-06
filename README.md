@@ -125,12 +125,15 @@ PyInstaller does produce a working executable.  But it starts up _very_ slowly e
 
 ### Nuitka
 
-Nuitka on macOS needs the same Conda set up that PyInstaller needs, to avoid problems with "mkl":
+#### MacOS
+
+Nuitka on macOS needs the same Conda set up that PyInstaller needs (i.e., getting NumPy from conda-forge), to avoid problems with "mkl":
 
     $ conda create --name python-dist-demo python=3.10
     $ conda activate python-dist-demo
     $ conda install -c conda-forge numpy
     $ conda install h5py
+    $ python -m pip install nuitka
 
 Nuitka then needs special arguments to create a standard macOS "application", which is really directory hierarchy with a special structure:
 
@@ -154,12 +157,18 @@ On macOS, run this demo as follows:
 
 It starts up slowly the first time it is run, but quickly on all subsequent runs, making it quite usable in general.  This example is simple, but there are no signs of errors due to the compilation performed by Nuitka.
 
-On Windows, Nuitka needs the `--include-data-files` argument again:
+#### Windows
 
+On Windows, getting NumPy from conda-forge is not needed (in fact, it does not seem to work), so it can be installed implicitly as a dependency for H5py.  To make a single executable, use Nuitka's `--onefile` argument instead of `--standalone`, and continue to use `--include-data-files`:
+
+    $ conda create --name python-dist-demo python=3.10
+    $ conda activate python-dist-demo
+    $ conda install h5py
+    $ python -m pip install nuitka
     $ cd python-dist-demo/demo1
     $ python -m nuitka --onefile --include-data-files=../VERSION=VERSION demo1.py
 
-On Windows, run this demo as follows:
+Run this demo on Windows as follows:
 
     $ demo1.exe -i path\to\example.h5j
     Checking for 'C:\Users\X\AppData\Local\Temp\VERSION'
@@ -170,7 +179,27 @@ On Windows, run this demo as follows:
 
 Performance on Windows does not seem quite as good as on macOS, but still, it is better than PyInstaller.
 
-On both macOS and Windows, the executables are rather large.
+#### Linux
+
+On Linux (Ubuntu 20.04, at least) two additional packages are needed: libpython-static and patchelf.
+
+    $ conda create --name python-dist-demo python=3.10
+    $ conda activate python-dist-demo
+    $ conda install h5py libpython-static patchelf
+    $ python -m pip install nuitka
+    $ cd python-dist-demo/demo1
+    $ python -m nuitka --onefile --include-data-files=../VERSION=VERSION demo1.py
+
+Run this demo on Linux as follows:
+
+    $ ./demo1.bin -i path\to\example.h5j
+    Checking for '/tmp/VERSION'
+    Checking for '/tmp/onefile_2083980_1686061142_611326/VERSION'
+    Version 1.0.0
+    Using input file: path\to\example.h5j
+    H5J dimensions: 1210, 566, 174
+
+On Windows and Linux, the `--onefile` option makes compilation take a long time.  On all platforms, the executables are rather large.
 
 ## Demo 2
 
