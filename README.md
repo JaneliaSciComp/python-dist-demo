@@ -21,7 +21,9 @@ To distribute executables, include them in the ["Releases" section of the GitHub
 
 A Windows executable is a single file, so it can be added to a GitHub release directly, but it will be smaller (and thus faster to download) if it is compressed to a zipped file, too.  Right-click on the Windows executable, choose "Send to" and then "Compressed (zipped) folder".
 
-There seems to be no way to _add_ executables (binaries) to a release that has been published, so be careful to assemble all the pieces of the release before publishing it.  Releasing executables for multiple platforms at once usually requires using multiple computers, so use the followwing approach:
+Linux executables can be zipped, too, for consistency, but doing so does not seem to make them much smaller.
+
+To release executables for all platforms at once requires some coordination across multiple computers.  Here is an approach that works:
 1. On one computer&mdash;say, a macOS system&mdash;start creating the release.  Follow the directions in the [GitHub documetation on releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository), which involves defining a new tag to be applied to the repository.
 2. Add the zipped macOS executable by dragging it to the draft release's input area labeled, "Attach binaries by dropping them here or selecting them."
 3. Instead of pressing "Publish release", press "Save draft" so it will be available for further editing.
@@ -87,7 +89,7 @@ In PowerShell, a `.` (dot) must precede the executable path to run it:
 $ . "C:\Program Files\Example\example.exe" -arg1 -arg2
 ```
 
-## Demo 1
+## Demo 1: HDF5/H5J
 
 The first demo uses [h5py](https://www.h5py.org/) to parse the metadata from the HDF5 part of a volume data set in [H5J format](https://github.com/JaneliaSciComp/workstation/blob/master/docs/H5JFileFormat.md).  Example H5J files can be found [here](https://github.com/JaneliaSciComp/web-h5j-loader#test-data).
 
@@ -95,8 +97,8 @@ This demo also outputs the contents of a `VERSION` file that is part of the GitH
 
 Without bundling, run it as follows:
 
-    $ conda create --name python-dist-demo
-    $ conda activate python-dist-demo
+    $ conda create --name python-dist-demo-1
+    $ conda activate python-dist-demo-1
     $ conda install h5py
     $ cd python-dist-demo/demo1
     $ python demo1.py -i path/to/example.h5j
@@ -109,10 +111,10 @@ Without bundling, run it as follows:
 
 To use PyInstaller on Windows, Conda can be set up as described above.
 
-On macOS, however, Conda must be [set up differently](https://github.com/pyinstaller/pyinstaller/issues/2270#issuecomment-385219881), or PyInstaller will fail when trying to process the h5py dependency on NumPy, with an error mentioning "mkl": 
+On macOS, however, Conda must be [set up differently](https://github.com/pyinstaller/pyinstaller/issues/2270#issuecomment-385219881)&mdash;i.e., installed from the conda-forge channel&mdash;or PyInstaller will fail when trying to process the h5py dependency on NumPy, with an error mentioning "mkl": 
 
-    $ conda create --name python-dist-demo python=3.10
-    $ conda activate python-dist-demo
+    $ conda create --name python-dist-demo-1 python=3.10
+    $ conda activate python-dist-demo-1
     $ conda install -c conda-forge numpy
     $ conda install h5py
 
@@ -127,10 +129,10 @@ PyInstaller does produce a working executable.  But it starts up _very_ slowly e
 
 #### MacOS
 
-Nuitka on macOS needs the same Conda set up that PyInstaller needs (i.e., getting NumPy from conda-forge), to avoid problems with "mkl":
+Nuitka on macOS needs the same Conda set up that PyInstaller needs (i.e., getting NumPy from the conda-forge channel), to avoid problems with "mkl":
 
-    $ conda create --name python-dist-demo python=3.10
-    $ conda activate python-dist-demo
+    $ conda create --name python-dist-demo-1 python=3.10
+    $ conda activate python-dist-demo-1
     $ conda install -c conda-forge numpy
     $ conda install h5py
     $ python -m pip install nuitka
@@ -159,10 +161,10 @@ It starts up slowly the first time it is run, but quickly on all subsequent runs
 
 #### Windows
 
-On Windows, getting NumPy from conda-forge is not needed (in fact, it does not seem to work), so it can be installed implicitly as a dependency for H5py.  To make a single executable, use Nuitka's `--onefile` argument instead of `--standalone`, and continue to use `--include-data-files`:
+On Windows, getting NumPy from the conda-forge channel is not needed (in fact, it does not seem to work), so it can be installed implicitly as a dependency for H5py.  To make a single executable, use Nuitka's `--onefile` argument instead of `--standalone`, and continue to use `--include-data-files`:
 
-    $ conda create --name python-dist-demo python=3.10
-    $ conda activate python-dist-demo
+    $ conda create --name python-dist-demo-1 python=3.10
+    $ conda activate python-dist-demo-1
     $ conda install h5py
     $ python -m pip install nuitka
     $ cd python-dist-demo/demo1
@@ -183,8 +185,8 @@ Performance on Windows does not seem quite as good as on macOS, but still, it is
 
 On Linux (Ubuntu 20.04, at least) two additional packages are needed: libpython-static and patchelf.
 
-    $ conda create --name python-dist-demo python=3.10
-    $ conda activate python-dist-demo
+    $ conda create --name python-dist-demo-1 python=3.10
+    $ conda activate python-dist-demo-1
     $ conda install h5py libpython-static patchelf
     $ python -m pip install nuitka
     $ cd python-dist-demo/demo1
@@ -201,8 +203,69 @@ Run this demo on Linux as follows:
 
 On Windows and Linux, the `--onefile` option makes compilation take a long time.  On all platforms, the executables are rather large.
 
-## Demo 2
+## Demo 2: Qt
+
+The second demo uses a Python wrapping of the [Qt framework](https://www.qt.io/product/framework) for cross-platform user interface development.  The demo creates a simple application window.  When the user chooses an image file with the "File/Open" menu, the image is displayed in the window in binary black-and-white form based on a threshold value, which the user can control with a vertical slider on the left side of the window.  This demo tests not only basic user-interface elements (windows, menus, image displayers, sliders, etc.) but also more advanced features like threading: the thresholding of the image runs on a worker thread so the main user-interface thread stays fully responsive.
+
+### Nuitka
+
+As of midyear 2023, Qt 6 is the latest version, and there are two choices for Python wrappings: [PyQt6 and PySide6](https://www.pythonguis.com/faq/pyqt6-vs-pyside6).  Nuitka seems to work better with [PySide6](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html): on macOS, at least, a PyQt6 demo compiled with Nuitka crashes on startup.  Hence, the demo code here uses PySide6. Fortunately, there are [very few differences between the syntax of PySide6 and PyQt6](https://www.pythonguis.com/faq/pyqt6-vs-pyside6).
+
+#### MacOS
+
+As in the first demo, Nuitka has problems with "mkl" unless NumPy is installed from the conda-forge channel.  Note also that Nuitka needs a special argument (`--plugin-enable=pyside6`) to build with PySide6 correctly.
+
+    $ conda create --name python-dist-demo-2 python=3.10
+    $ conda activate python-dist-demo-2
+    $ python -m pip install nuitka
+    $ python -m pip install PySide6
+    $ conda install -c conda-forge numpy
+    $ python -m nuitka --standalone --macos-create-app-bundle --plugin-enable=pyside6 --macos-sign-identity=C83C...5335 demo2.py
+
+Double-click on the application in the Finder to run it, or run it from a shell as:
+
+    $ demo2.app/Contents/MacOS/demo2 
+
+### Windows
+
+Build on Windows with the new `--plugin-enable=pyside6` argument, but the default version of NumPy and the `--onefile` argument instead of `--standalone`.  Note also that the `--windows-disable-console` argument prevents an additional terminal shell from appearing when the executable is running.
+
+    $ conda create --name python-dist-demo-2 python=3.10
+    $ conda activate python-dist-demo-2
+    $ python -m pip install nuitka
+    $ python -m pip install PySide6
+    $ conda install numpy
+    $ python -m nuitka --onefile --plugin-enable=pyside6 --windows-disable-console demo2.py
+
+Double-click on the application in the File Explorer to run it, or run it from a shell as:
+
+    $ .\demo2.exe 
+
+### Linux
+
+A Linux build requires new `--plugin-enable=pyside6` argument, plus the additional libpython-static and patchelf packages, as with the first demo.
+
+    $ conda create --name python-dist-demo-2 python=3.10
+    $ conda activate python-dist-demo-2
+    $ python -m pip install nuitka
+    $ python -m pip install PySide6
+    $ conda install numpy libpython-static patchelf
+    $ python -m nuitka --onefile --plugin-enable=pyside6 demo2.py
+
+Run in a shell as:
+
+    ./demo2.bin
+
+On some Linux systems, like Ubuntu 20.04, importing PySide6 into Python might fail with an error like the following:
+
+    qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+
+The fix is to install an extra library:
+
+    sudo apt install libxcb-cursor0
+
+## Demo 3
 
 _What to try next_?
-* _Some actualy NumPy functionality on the data in a H5J file_?
+* PyTorch?
 * [_Blender as a Python module_](https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html)?
