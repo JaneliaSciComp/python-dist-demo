@@ -115,13 +115,18 @@ On macOS, however, Conda must be [set up differently](https://github.com/pyinsta
 
     $ conda create --name python-dist-demo-1 python=3.10
     $ conda activate python-dist-demo-1
+    $ python -m pip install PyInstaller
     $ conda install -c conda-forge numpy
     $ conda install h5py
 
-The actual running of PyInstaller is the same on Windows and macOS:
+The actual running of PyInstaller on macOS is:
 
     $ cd python-dist-demo/demo1
-    $ pyinstaller demo1.py --onefile
+    $ pyinstaller --windowed demo1.py
+
+On Windows and Linux use:
+
+    $ pyinstaller --onefile demo1.py
 
 PyInstaller does produce a working executable.  But it starts up _very_ slowly every time it is run, so PyInstaller does not seem like a good solution.
 
@@ -207,6 +212,10 @@ On Windows and Linux, the `--onefile` option makes compilation take a long time.
 
 The second demo uses a Python wrapping of the [Qt framework](https://www.qt.io/product/framework) for cross-platform user interface development.  The demo creates a simple application window.  When the user chooses an image file with the "File/Open" menu, the image is displayed in the window in binary black-and-white form based on a threshold value, which the user can control with a vertical slider on the left side of the window.  This demo tests not only basic user-interface elements (windows, menus, image displayers, sliders, etc.) but also more advanced features like threading: the thresholding of the image runs on a worker thread so the main user-interface thread stays fully responsive.
 
+### PyInstaller
+
+As with the first demo, the executables produced by PyInstaller start up too slowly to be useful.  Also, they are larger than those produced by Nuitka, by a factor of 1.8 on macOS, 1.9 on Windows, and 2.7 on Linux.
+
 ### Nuitka
 
 As of midyear 2023, Qt 6 is the latest version, and there are two choices for Python wrappings: [PyQt6 and PySide6](https://www.pythonguis.com/faq/pyqt6-vs-pyside6).  Nuitka seems to work better with [PySide6](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html): on macOS, at least, a PyQt6 demo compiled with Nuitka crashes on startup.  Hence, the demo code here uses PySide6. Fortunately, there are [very few differences between the syntax of PySide6 and PyQt6](https://www.pythonguis.com/faq/pyqt6-vs-pyside6).
@@ -267,5 +276,5 @@ The fix is to install an extra library:
 ## Demo 3
 
 _What to try next_?
-* PyTorch?
+* _PyTorch?_
 * [_Blender as a Python module_](https://docs.blender.org/api/current/info_advanced_blender_as_bpy.html)?
