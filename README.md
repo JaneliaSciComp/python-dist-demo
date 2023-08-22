@@ -64,8 +64,8 @@ This certificate is used to code sign your app for distribution outside of the M
 
     The long hexidecimal identifier (e.g., `C83C...5335`) is the _code signing identity_, which can be used with Nuitka's `--macos-sign-identity` option, as [described below](#nuitka).
 11. Build the executable (e.g., using Nuitka) with code signing and hardening.
-12. To prepare for notarization, create an _app-specific password_ using the steps [described here](https://support.apple.com/en-us/HT204397). Doing so associates a name in the keychain with an automatically generated password, and what is needed in the subsequent steps is the password and not the name, so be sure to keep a record of the password (which will have a form like `abcd-efgh-ijkl-mnop`).
-13. A further preparation, look up of the _Team ID_ for the Apple Developer Program account as [described here](https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/).
+12. To prepare for notarization, create an _app-specific password_ using the steps [described here](https://support.apple.com/en-us/HT204397). Doing so associates a name in the keychain with an automatically generated password. What is needed in the subsequent steps is the password and not the name, so be sure to keep a record of the password (which will have a form like `abcd-efgh-ijkl-mnop`).
+13. As further preparation, look up the _Team ID_ for the Apple Developer Program account as [described here](https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/).
 14. Compress the built `.app` file into a `.zip` file by right-clicking on it in the Finder and choosing "Compress".
 15. Submit the `.zip` file for notarization with the command:
 
