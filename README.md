@@ -42,18 +42,18 @@ On macOS, downloading and using the executable requires extra steps due to Apple
 5. Choose the "Open" option from this dialog.
 6. The executable should now be ready for use.
 
-The macOS user can avoid these extra steps if the developer is willing to pay (roughly $100 per year) to join the [Apple Developer Program](https://developer.apple.com/programs).  Members of this program can apply _code signing_ to an executable so it will pass Apple's security measures automatically.  Apple expects that the typical way to apply code signing is through the [Xcode](https://developer.apple.com/xcode) development environment, but developers bundling Python scripts may well not work that way, and can use the following alternative approach:
+The macOS user can avoid these extra steps if the developer is willing to pay (roughly $100 per year) to join the [Apple Developer Program](https://developer.apple.com/programs).  Members of this program can apply _code signing_ and _notarization_ to an executable so it will pass Apple's security measures automatically.  Apple expects that the typical way to apply code signing and notarization is through the [Xcode](https://developer.apple.com/xcode) development environment, but developers bundling Python scripts may well not work that way, and can use the following alternative approach:
 1. [Log in](https://developer.apple.com/account) to an Apple Developer Program account.
 2. Go to the page for [creating a new certification](https://developer.apple.com/account/resources/certificates/add).
 3. Under "Software", choose "Developer ID Application:
 This certificate is used to code sign your app for distribution outside of the Mac App Store," and press "Continue".
 4. Under "Select a Developer ID Certificate Intermediary", choose a "Profile Type" of "G2 Sub-CA (Xcode 11.4.1 or later)".
 5. Click "Learn more" to [create a certificate signing request](https://developer.apple.com/help/account/create-certificates/create-a-certificate-signing-request).
-5. Follow the steps, noting that the `Certificate Assistant` that is mentioned is accessible through the `Keychain Access` application, in its menu also called "Keychain Access", right next to the Apple menu in the main menu bar.
-6. Two files will be created: `CertificateSigningRequest.certSigningRequest` and `developerID_application.cer`.  Double-click the _second_, the `.cer` file.
-7. Add `developerID_application.cer` to the `Login` keychain (adding it to `Local items` may cause an `Error: -25294`)
-8. Back in the main `Keychain Access` application window, a new item should appear in the `Certificates` tab.  If it is red, with an error message, try [downloading the "Developer ID - G2 (Expiring 09/17/2031 00:00:00 UTC)" certificate](https://www.apple.com/certificateauthority) and double-clicking to install _it_ in the keychain.
-9. In a shell, execute:
+6. Follow the steps, noting that the `Certificate Assistant` that is mentioned is accessible through the `Keychain Access` application, in its menu also called "Keychain Access", right next to the Apple menu in the main menu bar.
+7. Two files will be created: `CertificateSigningRequest.certSigningRequest` and `developerID_application.cer`.  Double-click the _second_, the `.cer` file.
+8. Add `developerID_application.cer` to the `Login` keychain (adding it to `Local items` may cause an `Error: -25294`)
+9. Back in the main `Keychain Access` application window, a new item should appear in the `Certificates` tab.  If it is red, with an error message, try [downloading the "Developer ID - G2 (Expiring 09/17/2031 00:00:00 UTC)" certificate](https://www.apple.com/certificateauthority) and double-clicking to install _it_ in the keychain.
+10. In a shell, execute:
 
         $ security find-identity -v -p codesigning
 
@@ -63,6 +63,39 @@ This certificate is used to code sign your app for distribution outside of the M
             1 valid identities found
 
     The long hexidecimal identifier (e.g., `C83C...5335`) is the _code signing identity_, which can be used with Nuitka's `--macos-sign-identity` option, as [described below](#nuitka).
+11. Build the executable (e.g., using Nuitka) with code signing and hardening.
+12. To prepare for notarization, create an _app-specific password_ using the steps [described here](https://support.apple.com/en-us/HT204397). Doing so associates a name in the keychain with an automatically generated password, and what is needed in the subsequent steps is the password and not the name, so be sure to keep a record of the password (which will have a form like `abcd-efgh-ijkl-mnop`).
+13. A further preparation, look up of the _Team ID_ for the Apple Developer Program account as [described here](https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/).
+14. Compress the built `.app` file into a `.zip` file by right-clicking on it in the Finder and choosing "Compress".
+15. Submit the `.zip` file for notarization with the command:
+
+        $ xcrun notarytool submit <.zip file> --apple-id "<email for Apple Developer Program account>" --team-id <Team ID> --password <app-specific password> --wait
+
+    A prompt will appear for the app-specific password; respond with the password from step 12.  Then messages like the following will appear:
+
+        Submission ID received
+        id: e5d1...2028
+        Successfully uploaded file33.6 MB of 33.6 MB)    
+        id: e5d1...2028
+        path: ...zip
+        Waiting for processing to complete.
+
+16. After a delay (which might be only a few seconds) a completion notice should appear:
+
+        Current status: Accepted...........
+        Processing complete
+        id: e5d1...2028
+        status: Accepted
+
+    The `.zip` file is now ready to be shared.
+
+17. To avoid entering `--apple-id` and `--team-id` and responding to the password prompt, these credentials can be saved in the keychain. See [this discussion](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow) of `xcrun notarytool store-credentials`.
+
+18. To diagnose problems with code signing or notarization, try the following command:
+
+        $ spctl -a -t exec -vv <.app file>
+
+(Note that the old approach to notarization, using `xcrun altool`, is deprecated, and will stop working in November, 2023.)
 
 ## Running Executables
 
@@ -149,9 +182,9 @@ Nuitka then needs special arguments to create a standard macOS "application", wh
 
 The `--include-data-files` argument is necessary for Nuitka to copy the `VERSION` file into the final bundle.  Note from the output of the demo, below, that where the `VERSION` file is different when running in a bundled executable and when running as a standard Python script; see the code for details.
 
-When using macOS code signing, as [described above](#distributing-executables), add the `--macos-sign-identity=C83C...5335` argument, where `C83C...5335` is the code signing identity found with the `security find-identity` command:
+When using macOS code signing and notarization, as [described above](#distributing-executables), add the `--macos-sign-notarization` and  `--macos-sign-identity=C83C...5335` arguments, where `C83C...5335` is the code signing identity found with the `security find-identity` command:
 
-    $ python -m nuitka --standalone --macos-create-app-bundle --include-data-files=../VERSION=VERSION --macos-sign-identity=C83C...5335 demo1.py
+    $ python -m nuitka --standalone --macos-create-app-bundle --include-data-files=../VERSION=VERSION --macos-sign-notarization --macos-sign-identity=C83C...5335 demo1.py
 
 On macOS, run this demo as follows:
 
@@ -229,7 +262,7 @@ As in the first demo, Nuitka has problems with "mkl" unless NumPy is installed f
     $ python -m pip install nuitka
     $ python -m pip install PySide6
     $ conda install -c conda-forge numpy
-    $ python -m nuitka --standalone --macos-create-app-bundle --plugin-enable=pyside6 --macos-sign-identity=C83C...5335 demo2.py
+    $ python -m nuitka --standalone --macos-create-app-bundle --plugin-enable=pyside6 --macos-sign-notarization --macos-sign-identity=C83C...5335 demo2.py
 
 Double-click on the application in the Finder to run it, or run it from a shell as:
 
@@ -252,7 +285,7 @@ Double-click on the application in the File Explorer to run it, or run it from a
 
 ### Linux
 
-A Linux build requires new `--plugin-enable=pyside6` argument, plus the additional libpython-static and patchelf packages, as with the first demo.
+A Linux build requires the new `--plugin-enable=pyside6` argument, plus the additional libpython-static and patchelf packages, as with the first demo.
 
     $ conda create --name python-dist-demo-2 python=3.10
     $ conda activate python-dist-demo-2
